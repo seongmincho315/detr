@@ -1,0 +1,12 @@
+[project]
+name = "detr-layout-server"
+version = "0.0.1"
+description = "docling의 RT-DETR 레이아웃 모델(docling-ibm-models)을 FastAPI로 감싼 서빙 앱"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "docling-ibm-models>=3.0",
+    "huggingface-hub>=0.24",
+    "pillow>=10.0",
+]
