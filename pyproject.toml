@@ -9,4 +9,16 @@ dependencies = [
     "docling-ibm-models>=3.0",
     "huggingface-hub>=0.24",
     "pillow>=10.0",
+    "torch==2.5.1",
+    "transformers==4.49.0",
 ]
+
+# 노드 GPU(GTX 1060, 드라이버 535 → CUDA 12.2까지만 지원) 호환을 위해
+# torch를 cu121 빌드로 고정 (기본 PyPI 휠은 최신 CUDA(cu130)라 드라이버와 안 맞음)
+[tool.uv.sources]
+torch = { index = "pytorch-cu121" }
+
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true

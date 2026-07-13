@@ -63,13 +63,15 @@ ARG MODEL_NAME
 ENV HF_HOME=/models/hf-cache
 ENV MODEL_NAME=${MODEL_NAME}
 
+COPY app ${APP_DIR}/app
+
+# 런타임엔 HF_HUB_OFFLINE=1이라 여기서 실패하면 폐쇄망에서 그대로 못 뜨므로, 실패를 삼키지 않고 빌드를 깨뜨림
 RUN mkdir -p ${HF_HOME} && \
     ${APP_DIR}/.venv/bin/python -c "\
 from app.predictor import MODEL_REPOS; \
 from huggingface_hub import snapshot_download; \
 import os; \
-snapshot_download(repo_id=MODEL_REPOS[os.environ['MODEL_NAME']])" || \
-    (echo '[WARN] 모델 사전 다운로드 실패 — 런타임 첫 요청 시 다시 시도됩니다' && true)
+snapshot_download(repo_id=MODEL_REPOS[os.environ['MODEL_NAME']])"
 
 ########################################
 # 4) runtime (최종)
@@ -84,13 +86,18 @@ ENV HF_HOME=/models/hf-cache
 ENV MODEL_NAME=${MODEL_NAME}
 ENV DEVICE=cpu
 ENV CONFIDENCE_THRESHOLD=0.3
+# 모델은 빌드 단계(models stage)에서 이미 이미지에 구워둠 — 런타임엔 HF Hub 접속 자체를 막아서
+# 폐쇄망에서도 동작하게 함 (안 걸면 캐시가 있어도 매번 Hub에 접속을 시도함)
+ENV HF_HUB_OFFLINE=1
 
 WORKDIR ${APP_DIR}
 
 COPY --from=deps ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 COPY --from=models /models /models
 COPY app ${APP_DIR}/app
-COPY config docker etc ${APP_DIR}/
+COPY config ${APP_DIR}/config
+COPY docker ${APP_DIR}/docker
+COPY etc ${APP_DIR}/etc
 
 RUN ln -sf ${APP_DIR}/config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf && \
     chmod +x ${APP_DIR}/etc/*.sh
